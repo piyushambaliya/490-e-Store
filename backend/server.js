@@ -6,6 +6,9 @@ import productRoutes from './routes/productRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import authRoutes from './routes/auth.js';
+import Product from './models/Product.js';
+import User from './models/User.js';
+import products from '../src/data/products.js';
 
 dotenv.config();
 
@@ -19,6 +22,30 @@ app.use(express.json());
 
 app.get('/', (req, res) => {
   res.send('API is running...');
+});
+
+app.get('/api/seed', async (req, res) => {
+  try {
+    await Product.deleteMany();
+    await User.deleteMany();
+
+    const adminUser = await User.create({
+      name: 'Admin User',
+      email: 'admin@example.com',
+      password: 'password123',
+      isAdmin: true,
+    });
+
+    const sampleProducts = products.map((product) => {
+      const { id, ...productWithoutId } = product;
+      return productWithoutId;
+    });
+
+    await Product.insertMany(sampleProducts);
+    res.send('Data Imported (Products & Admin User) Successfully!');
+  } catch (error) {
+    res.status(500).send(`Error with data import: ${error.message}`);
+  }
 });
 
 app.use('/api', authRoutes);
